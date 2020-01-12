@@ -119,7 +119,8 @@ function updateRowByDoi(range: Range, headers: string[]): Range {
 function updateSelectedRowByDoi(): void {
   let sheet: Sheet = SpreadsheetApp.getActiveSheet();
   let range: Range = sheet.getActiveRange();
-  let headers: string[] = sheet.getRange("2:2").getValues()[0];
+  let header_row: number = 1
+  let headers: string[] = sheet.getRange([header_row, header_row].join(":")).getValues()[0];
 
   updateRowByDoi(range, headers);
 }
