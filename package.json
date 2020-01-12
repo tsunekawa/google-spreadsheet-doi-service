@@ -1,0 +1,15 @@
+{
+  "name": "spreadsheet-doi-service",
+  "version": "1.0.0",
+  "description": "Doi Service for Google Spreadsheet",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Mao Tsunekawa",
+  "license": "MIT",
+  "dependencies": {
+    "@types/google-apps-script": "^1.0.9",
+    "clasp": "^1.0.0"
+  }
+}
