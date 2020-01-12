@@ -1,6 +1,8 @@
 type Range = GoogleAppsScript.Spreadsheet.Range;
 type Sheet = GoogleAppsScript.Spreadsheet.Sheet;
 
+
+
 function getRowsFromRange(range: Range): Range {
   let sheet: Sheet = range.getSheet();
   let startRowIndex: number = range.getRow();
@@ -31,8 +33,13 @@ function extractIdentifier(doiString: string): string {
 }
 
 function constructRequestUrl(identifier: string): string {
-  let endpoint: string = PropertiesService.getScriptProperties("DOI_API_ENDPOINT");
-  let url: string = endpoint + identifier;
+  let properties = PropertiesService.getScriptProperties();
+  let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
+  let parameters: object = {
+    mailto: properties.getProperty("CROSSREF_API_MAILTO")
+  }
+
+  let url: string = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
   return url;
 }
 
