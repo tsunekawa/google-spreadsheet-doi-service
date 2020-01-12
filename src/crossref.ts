@@ -1,21 +1,28 @@
-function getRowsFromRange (range) {
-  var sheet = range.getSheet();
-  var startRowIndex = range.getRow();
-  var endRowIndex = range.getLastRow();
-  var lastColumnIndex = sheet.getLastColumn();
-  var numRows     = endRowIndex - startRowIndex + 1;
-  
+type Range = GoogleAppsScript.Spreadsheet.Range;
+type Sheet = GoogleAppsScript.Spreadsheet.Sheet;
+
+function getRowsFromRange(range: Range): Range {
+  let sheet: Sheet = range.getSheet();
+  let startRowIndex: number = range.getRow();
+  let endRowIndex: number = range.getLastRow();
+  let lastColumnIndex: number = sheet.getLastColumn();
+  let numRows: number = endRowIndex - startRowIndex + 1;
+
   return sheet.getRange(startRowIndex, 1, numRows, lastColumnIndex);
 }
 
-function extractIdentifier(doiString) {
+/*
+ * return a doi identifier from doi string
+ * @param doiString doiString
+*/
+function extractIdentifier(doiString: string): string {
   if (!doiString) {
     throw "doiString is invalid: " + doiString;
   }
-  
-  var reg = /(?:https:\/\/doi\.org\/)?([0-9.]+\/.+)/;
-  var result = reg.exec(doiString)
-  
+
+  let reg: RegExp = /(?:https:\/\/doi\.org\/)?([0-9.]+\/.+)/;
+  let result: string[] = reg.exec(doiString)
+
   if (result.length >= 2) {
     return result[1];
   } else {
@@ -23,97 +30,96 @@ function extractIdentifier(doiString) {
   }
 }
 
-function constructRequestUrl(identifier) {
-  var endpoint = PropertiesService.getScriptProperties("DOI_API_ENDPOINT");
-  var url = endpoint + identifier;
+function constructRequestUrl(identifier: string): string {
+  let endpoint: string = PropertiesService.getScriptProperties("DOI_API_ENDPOINT");
+  let url: string = endpoint + identifier;
   return url;
 }
 
-function getMetadataFromDoi(doiString) {
-  var identifier = extractIdentifier(doiString);
-  var url        = constructRequestUrl(identifier);
-  
+function getMetadataFromDoi(doiString: string): object {
+  let identifier: string = extractIdentifier(doiString);
+  let url: string = constructRequestUrl(identifier);
+
   return JSON.parse(UrlFetchApp.fetch(url).getContentText());
 }
 
-function setMetadata(metadata, rowValues, headers) {
-  var titleIndex = headers.indexOf('title');
-  if(titleIndex >= 0) {
-    var titleValue = metadata.message.title[0];
-    rowValues[titleIndex] = titleValue;
+function setMetadata(metadata: object, rowValues: any[], headers: string[]) {
+  let titleIndex: number = headers.indexOf('title');
+  if (titleIndex >= 0) {
+    rowValues[titleIndex] = metadata.message.title[0];
   }
-  
-  var authorIndex = headers.indexOf('author');
-  if(authorIndex >= 0) {
-    var authorValue = metadata.message.author.map(function (author) {
+
+  let authorIndex = headers.indexOf('author');
+  if (authorIndex >= 0) {
+    let authorValue: string = metadata.message.author.map(function (author: object): string {
       return [author.given, author.family].join(" ");
     }).join(";");
+
     rowValues[authorIndex] = authorValue;
   }
 
-  var pubYearIndex = headers.indexOf('pubYear');
-  if(pubYearIndex >= 0) {
-    var publishedOnline = metadata.message['published-online'];
-    var pubYearValue;
-    
+  let pubYearIndex: number = headers.indexOf('pubYear');
+  if (pubYearIndex >= 0) {
+    let publishedOnline = metadata.message['published-online'];
+    let pubYearValue;
+
     if (publishedOnline) {
       pubYearValue = publishedOnline['date-parts'][0];
     } else {
       pubYearValue = "";
     }
-    
+
     rowValues[pubYearIndex] = pubYearValue;
   }
 
-  var journalTitleIndex = headers.indexOf('journalTitle');
-  if(journalTitleIndex >= 0) {
-    var journalTitleValue = metadata.message["container-title"][0];
+  let journalTitleIndex = headers.indexOf('journalTitle');
+  if (journalTitleIndex >= 0) {
+    let journalTitleValue = metadata.message["container-title"][0];
     rowValues[journalTitleIndex] = journalTitleValue;
   }
 
-  var issnIndex = headers.indexOf('issn');
-  if(issnIndex >= 0) {
-    var issnValue = metadata.message.ISSN[0];
+  let issnIndex = headers.indexOf('issn');
+  if (issnIndex >= 0) {
+    let issnValue = metadata.message.ISSN[0];
     rowValues[issnIndex] = issnValue;
   }
-  
-  var urlIndex = headers.indexOf('url');
-  if(urlIndex >= 0) {
-    var urlValue = metadata.message.URL;
+
+  let urlIndex = headers.indexOf('url');
+  if (urlIndex >= 0) {
+    let urlValue = metadata.message.URL;
     rowValues[urlIndex] = urlValue;
   }
-  
+
   return rowValues;
 }
 
-function updateRowByDoi(range, headers) {
-  var rows = getRowsFromRange(range);
-  var notation = rows.getA1Notation();
-  var rowsValues = rows.getValues();
-  
-  var updatedValues = rowsValues.map(function (rowValues) {
-    var doi = rowValues[headers.indexOf('doi')];
-    var metadata = getMetadataFromDoi(doi);
-    
+function updateRowByDoi(range: Range, headers: string[]): Range {
+  let rows: Range = getRowsFromRange(range);
+  let rowsValues: string[][] = rows.getValues();
+
+  let updatedValues: string[][] = rowsValues.map(function (rowValues: string[][]): string[][] {
+    let doi: string = rowValues[headers.indexOf('doi')];
+    let metadata: object = getMetadataFromDoi(doi);
+
     return setMetadata(metadata, rowValues, headers);
   });
 
   rows.setValues(updatedValues);
-  
+
   return rows;
 }
 
-function updateSelectedRowByDoi() {
-  var sheet = SpreadsheetApp.getActiveSheet();
-  var range = sheet.getActiveRange();
-  var headers = sheet.getRange("2:2").getValues()[0];
-  
+function updateSelectedRowByDoi(): void {
+  let sheet: Sheet = SpreadsheetApp.getActiveSheet();
+  let range: Range = sheet.getActiveRange();
+  let headers: string[] = sheet.getRange("2:2").getValues()[0];
+
   updateRowByDoi(range, headers);
 }
 
-function onOpen() {
-  var ui = SpreadsheetApp.getUi();
+function onOpen(): void {
+  let ui = SpreadsheetApp.getUi();
   ui.createMenu('DOI Service')
-      .addItem('DOIからメタデータを取得する', 'updateSelectedRowByDoi')
-      .addToUi();
+    .addItem('DOIからメタデータを取得する', 'updateSelectedRowByDoi')
+    .addToUi();
 }
