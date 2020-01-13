@@ -5,7 +5,7 @@ A Google App Script for using [DOI](https://github.com/CrossRef/rest-api-doc) an
 The script is developed using [clasp](https://developers.google.com/apps-script/guides/clasp) and [TypeScript](https://www.typescriptlang.org/).
 
 ## Requirements
-* Node.js 12.X
+* Node.js 12.14.1
 
 ## Install
 ```
