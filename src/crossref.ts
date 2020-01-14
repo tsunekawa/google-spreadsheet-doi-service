@@ -14,6 +14,41 @@ type Range = GoogleAppsScript.Spreadsheet.Range;
 type Sheet = GoogleAppsScript.Spreadsheet.Sheet;
 
 
+/* Type Definitions for Crossref Metadata API JSON Format
+ * Ref. https://github.com/Crossref/rest-api-doc/blob/master/api_format.md
+ */
+
+type URL = string
+
+interface Affiliation {
+  name: string
+}
+
+interface Contributor {
+  family: string
+  given?: string
+  ORCID?: URL
+  authenticated_orcid?: boolean
+  affiliation?: Affiliation[] 
+}
+
+interface Work {
+  title: string
+  author?: Contributor[]
+  ISSN?: string
+  URL: URL
+}
+
+interface Response {
+  status: string,
+  "message-type": string,
+  "message-version": string,
+  message: Work
+}
+
+/*
+ * Functions
+ */
 
 function getRowsFromRange(range: Range): Range {
   let sheet: Sheet = range.getSheet();
@@ -51,18 +86,18 @@ function constructRequestUrl(identifier: string): string {
     mailto: properties.getProperty("CROSSREF_API_MAILTO")
   }
 
-  let url: string = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
+  let url: URL = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
   return url;
 }
 
-function getMetadataFromDoi(doiString: string): object {
+function getMetadataFromDoi(doiString: string): Response {
   let identifier: string = extractIdentifier(doiString);
   let url: string = constructRequestUrl(identifier);
 
   return JSON.parse(UrlFetchApp.fetch(url).getContentText());
 }
 
-function setMetadata(metadata: object, rowValues: any[], headers: string[]) {
+function setMetadata(metadata: Response, rowValues: any[], headers: string[]): string[] {
   let titleIndex: number = headers.indexOf('title');
   if (titleIndex >= 0) {
     rowValues[titleIndex] = metadata.message.title[0];
@@ -70,7 +105,7 @@ function setMetadata(metadata: object, rowValues: any[], headers: string[]) {
 
   let authorIndex = headers.indexOf('author');
   if (authorIndex >= 0) {
-    let authorValue: string = metadata.message.author.map(function (author: object): string {
+    let authorValue: string = metadata.message.author.map(function (author: Contributor): string {
       return [author.given, author.family].join(" ");
     }).join(";");
 
@@ -116,9 +151,9 @@ function updateRowByDoi(range: Range, headers: string[]): Range {
   let rows: Range = getRowsFromRange(range);
   let rowsValues: string[][] = rows.getValues();
 
-  let updatedValues: string[][] = rowsValues.map(function (rowValues: string[][]): string[][] {
+  let updatedValues: string[][] = rowsValues.map(function (rowValues: string[]): string[] {
     let doi: string = rowValues[headers.indexOf('doi')];
-    let metadata: object = getMetadataFromDoi(doi);
+    let metadata: Response = getMetadataFromDoi(doi);
 
     return setMetadata(metadata, rowValues, headers);
   });
