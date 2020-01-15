@@ -72,6 +72,9 @@ namespace Crossref {
     license: License[]
     funder: Funder[]
     author?: Contributor[]
+    editor?: Contributor[]
+    chair?: Contributor[]
+    translator?: Contributor[]
   }
 
   export interface Funder {
