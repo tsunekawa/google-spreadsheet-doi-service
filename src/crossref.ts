@@ -12,38 +12,118 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 
 type Range = GoogleAppsScript.Spreadsheet.Range;
 type Sheet = GoogleAppsScript.Spreadsheet.Sheet;
-
+type URL = string
+type XMLString = string
 
 /* Type Definitions for Crossref Metadata API JSON Format
  * Ref. https://github.com/Crossref/rest-api-doc/blob/master/api_format.md
  */
 
-type URL = string
+namespace Crossref {
 
-interface Affiliation {
-  name: string
-}
+  export interface Affiliation {
+    name: string
+  }
 
-interface Contributor {
-  family: string
-  given?: string
-  ORCID?: URL
-  authenticated_orcid?: boolean
-  affiliation?: Affiliation[] 
-}
+  export interface Contributor {
+    family: string
+    given?: string
+    ORCID?: URL
+    authenticated_orcid?: boolean
+    affiliation?: Affiliation[]
+  }
 
-interface Work {
-  title: string
-  author?: Contributor[]
-  ISSN?: string
-  URL: URL
-}
+  export interface Work {
+    publisher: string
+    title: string[]
+    originalTitle?: string[]
+    shortTitle?: string[]
+    abstract?: XMLString
+    referenceCount: number
+    referencesCount: number
+    isReferencedByCount: number
+    source: 'crossref'
+    prefix: string
+    DOI: string
+    URL: URL
+    member: string
+    type: string
+    created: _Date
+    deposited: _Date
+    indexed: _Date
+    issued?: PartialDate
+    posted?: PartialDate
+    accepted?: PartialDate
+    subtitle?: string[]
+    containerTitle?: string[]
+    shortContainerTitle?: string[]
+    groupTitle?: string
+    issue?: string
+    volume?: string
+    page?: string
+    articleNumber?: string
+    publishedPrint?: PartialDate
+    publishedOnline?: PartialDate
+    subject?: string[]
+    ISSN?: string[]
+    issnType?: ISSNWithType[]
+    ISBN?: string[]
+    archive: string[]
+    license: License[]
+    funder: Funder[]
+    author?: Contributor[]
+  }
 
-interface Response {
-  status: string,
-  "message-type": string,
-  "message-version": string,
-  message: Work
+  export interface Funder {
+    name: string
+    DOI?: string
+    award?: string[]
+    doiAssertedBy?: string
+  }
+
+  export interface Assertion {
+    name: string
+    value: string
+    URL?: URL
+    explanation?: URL
+    label?: string
+    order?: number
+    group?: AssertionGroup
+  }
+
+  export interface AssertionGroup {
+    name: string
+    label?: string
+  }
+
+  export interface License {
+    contentVersion: string
+    delayInDays: number
+    start: PartialDate
+    URL: URL
+  }
+  export interface _Date {
+    dateParts: [number, number, number]
+    timestamp: number
+    dateTime: string
+  }
+
+  export interface PartialDate {
+    dateParts: number[]
+  }
+
+  export interface ISSNWithType {
+    value: string
+    type: "eissn" | "pissn" | "lissn"
+  }
+
+  export interface Response {
+    status: string,
+    "message-type": string,
+    "message-version": string,
+    message: Work
+  }
+
 }
 
 /*
@@ -90,14 +170,14 @@ function constructRequestUrl(identifier: string): string {
   return url;
 }
 
-function getMetadataFromDoi(doiString: string): Response {
+function getMetadataFromDoi(doiString: string): Crossref.Response {
   let identifier: string = extractIdentifier(doiString);
   let url: string = constructRequestUrl(identifier);
 
   return JSON.parse(UrlFetchApp.fetch(url).getContentText());
 }
 
-function setMetadata(metadata: Response, rowValues: any[], headers: string[]): string[] {
+function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: string[]): string[] {
   let titleIndex: number = headers.indexOf('title');
   if (titleIndex >= 0) {
     rowValues[titleIndex] = metadata.message.title[0];
@@ -105,7 +185,7 @@ function setMetadata(metadata: Response, rowValues: any[], headers: string[]): s
 
   let authorIndex = headers.indexOf('author');
   if (authorIndex >= 0) {
-    let authorValue: string = metadata.message.author.map(function (author: Contributor): string {
+    let authorValue: string = metadata.message.author.map(function (author: Crossref.Contributor): string {
       return [author.given, author.family].join(" ");
     }).join(";");
 
@@ -153,7 +233,7 @@ function updateRowByDoi(range: Range, headers: string[]): Range {
 
   let updatedValues: string[][] = rowsValues.map(function (rowValues: string[]): string[] {
     let doi: string = rowValues[headers.indexOf('doi')];
-    let metadata: Response = getMetadataFromDoi(doi);
+    let metadata: Crossref.Response = getMetadataFromDoi(doi);
 
     return setMetadata(metadata, rowValues, headers);
   });
