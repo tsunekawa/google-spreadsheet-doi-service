@@ -75,6 +75,82 @@ namespace Crossref {
     editor?: Contributor[]
     chair?: Contributor[]
     translator?: Contributor[]
+    updateTo?: Update[]
+    updatePolicy?: URL
+    link?: ResourceLink[]
+    clicalTrialNumber?: ClinicalTrialNumber[]
+    alternativeId?: string
+    reference?: Reference[]
+    contentDomain?: ContentDomain
+    relation?: Relations
+    review?: Review
+  }  
+
+  export interface Relation {
+    idType: string
+    id: string
+    assertedBy: "subject" | "object"
+  }
+  
+  type Relations = { string : Relation }
+ 
+  export interface ContentDomain {
+    domain: string[]
+    crossrefRestriction: boolean
+  }  
+ 
+  export interface Review {
+    runningNumber?: string
+    revisionRound?: string
+    stage?: "pre-publication" | "postPublication"
+    recommendation?: "major-revision" | "minor-revision" | "reject" | "reject-with-resubmit" | "accept"
+    type?: "referee-report" | "editor-report" | "author-comment" | "community-comment" | "aggregate"
+    competingInterestStatement?: string
+    language?: string
+  }
+
+  export interface Reference {
+    key: string 	
+    DOI?: string 	
+    doiAssertedBy?: "crossref" | "publisher"
+    issue?: string 	
+    firstPage?: string 	
+    volume?: string 	
+    edition?: string 	
+    component?: string 	
+    standardDesignator?: string 	
+    standardsBody?: string 	
+    author?: string 	
+    year?: string 	
+    unstructured?: string 	
+    journalTitle?: string 	
+    articleTitle?: string 	
+    seriesTitle?: string 	
+    volumeTitle?: string 	
+    ISSN?: string 	
+    issnType?: "pissn" | "eissn"
+    ISBN?: string 	
+    isbnType?: string
+  }
+
+  export interface ClinicalTrialNumber {
+    clinicalTrialNumber:	string //	Identifier of the clinical trial
+    registry: string // DOI of the clinical trial regsitry that assigned the trial number
+    type: string // One of preResults, results or postResults
+  }
+
+  export interface ResourceLink {
+    intendedApplication: "text-mining" | "similarity-checking" | "unspecified"
+    contentVersion: "vor" | "am" | "unspecified"
+    URL: URL
+    contentType?: string
+  }
+
+  export interface Update {
+    updated: PartialDate
+    DOI: string
+    type: string
+    label?: string
   }
 
   export interface Funder {
