@@ -21,16 +21,11 @@ type XMLString = string
 
 namespace Crossref {
 
-  export interface Affiliation {
-    name: string
-  }
-
-  export interface Contributor {
-    family: string
-    given?: string
-    ORCID?: URL
-    authenticated_orcid?: boolean
-    affiliation?: Affiliation[]
+  export interface Response {
+    status: string,
+    "message-type": string,
+    "message-version": string,
+    message: Work
   }
 
   export interface Work {
@@ -86,27 +81,77 @@ namespace Crossref {
     review?: Review
   }  
 
-  export interface Relation {
-    idType: string
-    id: string
-    assertedBy: "subject" | "object"
+  // Work Nested Types
+
+  export interface Funder {
+    name: string
+    DOI?: string
+    award?: string[]
+    doiAssertedBy?: string
   }
-  
-  type Relations = { string : Relation }
- 
-  export interface ContentDomain {
-    domain: string[]
-    crossrefRestriction: boolean
-  }  
- 
-  export interface Review {
-    runningNumber?: string
-    revisionRound?: string
-    stage?: "pre-publication" | "postPublication"
-    recommendation?: "major-revision" | "minor-revision" | "reject" | "reject-with-resubmit" | "accept"
-    type?: "referee-report" | "editor-report" | "author-comment" | "community-comment" | "aggregate"
-    competingInterestStatement?: string
-    language?: string
+
+  export interface ClinicalTrialNumber {
+    clinicalTrialNumber:	string //	Identifier of the clinical trial
+    registry: string // DOI of the clinical trial regsitry that assigned the trial number
+    type: string // One of preResults, results or postResults
+  }
+
+  export interface Contributor {
+    family: string
+    given?: string
+    ORCID?: URL
+    authenticated_orcid?: boolean
+    affiliation?: Affiliation[]
+  }
+
+  export interface Affiliation {
+    name: string
+  }
+
+  export interface _Date {
+    dateParts: [number, number, number]
+    timestamp: number
+    dateTime: string
+  }
+
+  export interface PartialDate {
+    dateParts: number[]
+  }
+
+  export interface Update {
+    updated: PartialDate
+    DOI: string
+    type: string
+    label?: string
+  }
+
+  export interface Assertion {
+    name: string
+    value: string
+    URL?: URL
+    explanation?: URL
+    label?: string
+    order?: number
+    group?: AssertionGroup
+  }
+
+  export interface AssertionGroup {
+    name: string
+    label?: string
+  }
+
+  export interface License {
+    contentVersion: string
+    delayInDays: number
+    start: PartialDate
+    URL: URL
+  }
+
+  export interface ResourceLink {
+    intendedApplication: "text-mining" | "similarity-checking" | "unspecified"
+    contentVersion: "vor" | "am" | "unspecified"
+    URL: URL
+    contentType?: string
   }
 
   export interface Reference {
@@ -133,74 +178,32 @@ namespace Crossref {
     isbnType?: string
   }
 
-  export interface ClinicalTrialNumber {
-    clinicalTrialNumber:	string //	Identifier of the clinical trial
-    registry: string // DOI of the clinical trial regsitry that assigned the trial number
-    type: string // One of preResults, results or postResults
-  }
-
-  export interface ResourceLink {
-    intendedApplication: "text-mining" | "similarity-checking" | "unspecified"
-    contentVersion: "vor" | "am" | "unspecified"
-    URL: URL
-    contentType?: string
-  }
-
-  export interface Update {
-    updated: PartialDate
-    DOI: string
-    type: string
-    label?: string
-  }
-
-  export interface Funder {
-    name: string
-    DOI?: string
-    award?: string[]
-    doiAssertedBy?: string
-  }
-
-  export interface Assertion {
-    name: string
-    value: string
-    URL?: URL
-    explanation?: URL
-    label?: string
-    order?: number
-    group?: AssertionGroup
-  }
-
-  export interface AssertionGroup {
-    name: string
-    label?: string
-  }
-
-  export interface License {
-    contentVersion: string
-    delayInDays: number
-    start: PartialDate
-    URL: URL
-  }
-  export interface _Date {
-    dateParts: [number, number, number]
-    timestamp: number
-    dateTime: string
-  }
-
-  export interface PartialDate {
-    dateParts: number[]
-  }
-
   export interface ISSNWithType {
     value: string
     type: "eissn" | "pissn" | "lissn"
   }
+ 
+  export interface ContentDomain {
+    domain: string[]
+    crossrefRestriction: boolean
+  }  
+  
+  export type Relations = { string : Relation }
 
-  export interface Response {
-    status: string,
-    "message-type": string,
-    "message-version": string,
-    message: Work
+  export interface Relation {
+    idType: string
+    id: string
+    assertedBy: "subject" | "object"
+  }
+ 
+  export interface Review {
+    runningNumber?: string
+    revisionRound?: string
+    stage?: "pre-publication" | "postPublication"
+    recommendation?: "major-revision" | "minor-revision" | "reject" | "reject-with-resubmit" | "accept"
+    type?: "referee-report" | "editor-report" | "author-comment" | "community-comment" | "aggregate"
+    competingInterestStatement?: string
+    language?: string
   }
 
 }
