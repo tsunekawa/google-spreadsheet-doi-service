@@ -46,7 +46,7 @@ namespace Crossref {
     created: _Date
     deposited: _Date
     indexed: _Date
-    issued?: PartialDate
+    issued: PartialDate
     posted?: PartialDate
     accepted?: PartialDate
     subtitle?: string[]
@@ -63,9 +63,9 @@ namespace Crossref {
     ISSN?: string[]
     issnType?: ISSNWithType[]
     ISBN?: string[]
-    archive: string[]
-    license: License[]
-    funder: Funder[]
+    archive?: string[]
+    license?: License[]
+    funder?: Funder[]
     author?: Contributor[]
     editor?: Contributor[]
     chair?: Contributor[]
