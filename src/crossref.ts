@@ -206,6 +206,47 @@ namespace Crossref {
     language?: string
   }
 
+  /*
+   * return a doi identifier from doi string
+   * @param doiString doiString
+   * */
+  function extractIdentifier(doiString: string): string {
+    if (!doiString) {
+      throw "doiString is invalid: " + doiString;
+    }
+
+    let reg: RegExp = /(?:https:\/\/doi\.org\/)?([0-9.]+\/.+)/;
+    let result: string[] = reg.exec(doiString)
+
+    if (result.length >= 2) {
+      return result[1];
+    } else {
+      return "";
+    }
+  }
+
+  function constructRequestUrl(identifier: string): string {
+    let properties = PropertiesService.getScriptProperties();
+    let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
+    let parameters: object = {
+      mailto: properties.getProperty("CROSSREF_API_MAILTO")
+    }
+
+    let url: URL = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
+    return url;
+  }
+
+  function get(url: string): string {
+    return UrlFetchApp.fetch(url).getContentText()
+  }
+
+  export function getWork(doiString: string): Response {
+    let identifier: string = extractIdentifier(doiString);
+    let url: string = constructRequestUrl(identifier);
+
+    return JSON.parse(get(url));
+  }
+
 }
 
 /*
@@ -222,42 +263,6 @@ function getRowsFromRange(range: Range): Range {
   return sheet.getRange(startRowIndex, 1, numRows, lastColumnIndex);
 }
 
-/*
- * return a doi identifier from doi string
- * @param doiString doiString
-*/
-function extractIdentifier(doiString: string): string {
-  if (!doiString) {
-    throw "doiString is invalid: " + doiString;
-  }
-
-  let reg: RegExp = /(?:https:\/\/doi\.org\/)?([0-9.]+\/.+)/;
-  let result: string[] = reg.exec(doiString)
-
-  if (result.length >= 2) {
-    return result[1];
-  } else {
-    return "";
-  }
-}
-
-function constructRequestUrl(identifier: string): string {
-  let properties = PropertiesService.getScriptProperties();
-  let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
-  let parameters: object = {
-    mailto: properties.getProperty("CROSSREF_API_MAILTO")
-  }
-
-  let url: URL = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
-  return url;
-}
-
-function getMetadataFromDoi(doiString: string): Crossref.Response {
-  let identifier: string = extractIdentifier(doiString);
-  let url: string = constructRequestUrl(identifier);
-
-  return JSON.parse(UrlFetchApp.fetch(url).getContentText());
-}
 
 function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: string[]): string[] {
   let titleIndex: number = headers.indexOf('title');
@@ -315,7 +320,7 @@ function updateRowByDoi(range: Range, headers: string[]): Range {
 
   let updatedValues: string[][] = rowsValues.map(function (rowValues: string[]): string[] {
     let doi: string = rowValues[headers.indexOf('doi')];
-    let metadata: Crossref.Response = getMetadataFromDoi(doi);
+    let metadata: Crossref.Response = Crossref.getWork(doi);
 
     return setMetadata(metadata, rowValues, headers);
   });
