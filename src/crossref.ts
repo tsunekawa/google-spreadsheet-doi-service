@@ -206,6 +206,60 @@ namespace Crossref {
     language?: string
   }
 
+  class DOI {
+    private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)doi.org\/)(10\.([\/]+))\/([\/]+)$/
+    private static PREFIX_PATTERN = /10\.[\/]+/
+    private static SUFFIX_PATTERN = /[\/]+/
+
+    static parse(doiString: string): DOI {
+      let result = this.DOI_PARSE_PATTERN.exec(doiString)
+
+      if (!result) {
+        throw doiString + " is not DOI"
+      }
+      
+      let prefix = result[1]
+      let suffix = result[2]
+
+      return new DOI(prefix, suffix)
+    }
+
+    static isDOI?(value: string): boolean {
+      return value.match(this.DOI_PARSE_PATTERN).length > 0
+    }
+
+    static equal(doi_a: DOI, doi_b: DOI): boolean {
+      return doi_a.equal?(doi_b)
+    }
+
+    resistrant: string
+    prefix: string
+    suffix: string
+
+    constructor (prefix: string, suffix: string) {
+      this.prefix = prefix
+      this.resistrant = prefix.replace(/^10\./, "")
+      this.suffix = suffix
+    }
+
+    isValid?(): boolean {
+      return (this.prefix.length > 0 && this.suffix.length > 0)
+    }
+
+    equal?(anotherDOI: DOI) {
+      this.toString().toLowerCase() == anotherDOI.toString().toLowerCase()
+    }
+
+    toString(): string {
+      return (this.prefix + "/" + this.suffix).toLowerCase()
+    }
+
+    toURI(): URL {
+      return ["http://doi.org", this.prefix, this.suffix].join("/").toLowerCase()
+    }
+
+  }
+
   /*
    * return a doi identifier from doi string
    * @param doiString doiString
