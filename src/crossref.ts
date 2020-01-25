@@ -226,7 +226,7 @@ function getRowsFromRange(range: Range): Range {
  * return a doi identifier from doi string
  * @param doiString doiString
 */
-function extractIdentifier(doiString: string): string {
+export function extractIdentifier(doiString: string): string {
   if (!doiString) {
     throw "doiString is invalid: " + doiString;
   }
