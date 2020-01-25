@@ -19,7 +19,7 @@ type XMLString = string
  * Ref. https://github.com/Crossref/rest-api-doc/blob/master/api_format.md
  */
 
-namespace Crossref {
+export namespace Crossref {
 
   export interface Response {
     status: string,
@@ -264,7 +264,7 @@ namespace Crossref {
    * return a doi identifier from doi string
    * @param doiString doiString
    * */
-  function extractIdentifier(doiString: string): string {
+  export function extractIdentifier(doiString: string): string {
     if (!doiString) {
       throw "doiString is invalid: " + doiString;
     }
