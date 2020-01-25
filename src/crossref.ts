@@ -224,12 +224,12 @@ namespace Crossref {
       return new DOI(prefix, suffix)
     }
 
-    static isDOI?(value: string): boolean {
+    static isDOI(value: string): boolean {
       return value.match(this.DOI_PARSE_PATTERN).length > 0
     }
 
     static equal(doi_a: DOI, doi_b: DOI): boolean {
-      return doi_a.equal?(doi_b)
+      return doi_a.equal(doi_b)
     }
 
     resistrant: string
@@ -242,12 +242,12 @@ namespace Crossref {
       this.suffix = suffix
     }
 
-    isValid?(): boolean {
+    isValid(): boolean {
       return (this.prefix.length > 0 && this.suffix.length > 0)
     }
 
-    equal?(anotherDOI: DOI) {
-      this.toString().toLowerCase() == anotherDOI.toString().toLowerCase()
+    equal(anotherDOI: DOI): boolean {
+      return this.toString().toLowerCase() == anotherDOI.toString().toLowerCase()
     }
 
     toString(): string {
