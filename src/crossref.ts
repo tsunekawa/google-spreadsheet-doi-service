@@ -206,8 +206,8 @@ export namespace Crossref {
     language?: string
   }
 
-  class DOI {
-    private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)doi.org\/)(10\.([\/]+))\/([\/]+)$/
+  export class DOI {
+    private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)doi.org\/)?(10\.([\/]+))\/([\/]+)$/
     private static PREFIX_PATTERN = /10\.[\/]+/
     private static SUFFIX_PATTERN = /[\/]+/
 
@@ -218,8 +218,8 @@ export namespace Crossref {
         throw doiString + " is not DOI"
       }
       
-      let prefix = result[1]
-      let suffix = result[2]
+      let prefix = result.groups[1]
+      let suffix = result.groups[2]
 
       return new DOI(prefix, suffix)
     }
