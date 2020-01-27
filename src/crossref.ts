@@ -79,7 +79,7 @@ export namespace Crossref {
     contentDomain?: ContentDomain
     relation?: Relations
     review?: Review
-  }  
+  }
 
   // Work Nested Types
 
@@ -91,7 +91,7 @@ export namespace Crossref {
   }
 
   export interface ClinicalTrialNumber {
-    clinicalTrialNumber:	string //	Identifier of the clinical trial
+    clinicalTrialNumber: string //	Identifier of the clinical trial
     registry: string // DOI of the clinical trial regsitry that assigned the trial number
     type: string // One of preResults, results or postResults
   }
@@ -155,26 +155,26 @@ export namespace Crossref {
   }
 
   export interface Reference {
-    key: string 	
-    DOI?: string 	
+    key: string
+    DOI?: string
     doiAssertedBy?: "crossref" | "publisher"
-    issue?: string 	
-    firstPage?: string 	
-    volume?: string 	
-    edition?: string 	
-    component?: string 	
-    standardDesignator?: string 	
-    standardsBody?: string 	
-    author?: string 	
-    year?: string 	
-    unstructured?: string 	
-    journalTitle?: string 	
-    articleTitle?: string 	
-    seriesTitle?: string 	
-    volumeTitle?: string 	
-    ISSN?: string 	
+    issue?: string
+    firstPage?: string
+    volume?: string
+    edition?: string
+    component?: string
+    standardDesignator?: string
+    standardsBody?: string
+    author?: string
+    year?: string
+    unstructured?: string
+    journalTitle?: string
+    articleTitle?: string
+    seriesTitle?: string
+    volumeTitle?: string
+    ISSN?: string
     issnType?: "pissn" | "eissn"
-    ISBN?: string 	
+    ISBN?: string
     isbnType?: string
   }
 
@@ -182,20 +182,20 @@ export namespace Crossref {
     value: string
     type: "eissn" | "pissn" | "lissn"
   }
- 
+
   export interface ContentDomain {
     domain: string[]
     crossrefRestriction: boolean
-  }  
-  
-  export type Relations = { string : Relation }
+  }
+
+  export type Relations = { string: Relation }
 
   export interface Relation {
     idType: string
     id: string
     assertedBy: "subject" | "object"
   }
- 
+
   export interface Review {
     runningNumber?: string
     revisionRound?: string
@@ -207,7 +207,7 @@ export namespace Crossref {
   }
 
   export class DOI {
-    private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)doi.org\/)?(10\.([\/]+))\/([\/]+)$/
+    private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)?doi.org\/)?(10\.[^\/]+)\/([^\/]+)$/
     private static PREFIX_PATTERN = /10\.[\/]+/
     private static SUFFIX_PATTERN = /[\/]+/
 
@@ -217,9 +217,9 @@ export namespace Crossref {
       if (!result) {
         throw doiString + " is not DOI"
       }
-      
-      let prefix = result.groups[1]
-      let suffix = result.groups[2]
+
+      let prefix = result[1]
+      let suffix = result[2]
 
       return new DOI(prefix, suffix)
     }
@@ -236,7 +236,7 @@ export namespace Crossref {
     prefix: string
     suffix: string
 
-    constructor (prefix: string, suffix: string) {
+    constructor(prefix: string, suffix: string) {
       this.prefix = prefix
       this.resistrant = prefix.replace(/^10\./, "")
       this.suffix = suffix
@@ -255,7 +255,7 @@ export namespace Crossref {
     }
 
     toURI(): URL {
-      return ["http://doi.org", this.prefix, this.suffix].join("/").toLowerCase()
+      return ["https://doi.org", this.prefix, this.suffix].join("/").toLowerCase()
     }
 
   }
