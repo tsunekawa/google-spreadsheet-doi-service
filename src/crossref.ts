@@ -265,18 +265,7 @@ export namespace Crossref {
    * @param doiString doiString
    * */
   export function extractIdentifier(doiString: string): string {
-    if (!doiString) {
-      throw "doiString is invalid: " + doiString;
-    }
-
-    let reg: RegExp = /(?:https:\/\/doi\.org\/)?([0-9.]+\/.+)/;
-    let result: string[] = reg.exec(doiString)
-
-    if (result.length >= 2) {
-      return result[1];
-    } else {
-      return "";
-    }
+    return DOI.parse(doiString).toString()
   }
 
   function constructRequestUrl(identifier: string): string {
