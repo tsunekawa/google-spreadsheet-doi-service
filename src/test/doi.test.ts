@@ -11,12 +11,12 @@ declare function GasTap(): test
 
 function unitTestDOIClass() {
   let test = GasTap()
-  const DOI = Crossref.DOI
+  const Doi = Crossref.Doi
   let doi = "https://doi.org/10.7191/jeslib.2014.1060"
 
   test("DOI#new", (t) => {
     t.notThrow(() => {
-      new DOI("10.7191", "jeslib.2014.1060")
+      new Doi("10.7191", "jeslib.2014.1060")
     }, "DOI can create an instance")
   })
 

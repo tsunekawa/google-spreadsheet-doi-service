@@ -206,12 +206,33 @@ export namespace Crossref {
     language?: string
   }
 
-  export class DOI {
+  export interface DoiInterface {
+    prefix: string
+    suffix: string
+    readonly registrant: string
+
+    /**
+     * @return doiString - return DOI Name as string
+     */
+    toString(): string
+
+    /**
+     * @return url - return DOI Name as URL
+     */
+    toURI(): URL
+
+    isValid(): boolean
+
+    equal(doi: DoiInterface): boolean
+
+  }
+
+  export class Doi implements DoiInterface {
     private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)?doi.org\/)?(10\.[^\/]+)\/([^\/]+)$/
     private static PREFIX_PATTERN = /10\.[\/]+/
     private static SUFFIX_PATTERN = /[\/]+/
 
-    static parse(doiString: string): DOI {
+    static parse(doiString: string): DoiInterface {
       let result = this.DOI_PARSE_PATTERN.exec(doiString)
 
       if (!result) {
@@ -221,32 +242,38 @@ export namespace Crossref {
       let prefix = result[1]
       let suffix = result[2]
 
-      return new DOI(prefix, suffix)
+      return new Doi(prefix, suffix)
     }
 
     static isDOI(value: string): boolean {
       return value.match(this.DOI_PARSE_PATTERN).length > 0
     }
 
-    static equal(doi_a: DOI, doi_b: DOI): boolean {
+    static equal(doi_a: DoiInterface, doi_b: DoiInterface): boolean {
       return doi_a.equal(doi_b)
     }
 
-    resistrant: string
+    constructor(prefix: string, suffix: string) {
+      this.prefix = prefix
+      this.suffix = suffix
+    }
+
     prefix: string
     suffix: string
 
-    constructor(prefix: string, suffix: string) {
-      this.prefix = prefix
-      this.resistrant = prefix.replace(/^10\./, "")
-      this.suffix = suffix
+    get registrant(): string {
+      if (!this.prefix) {
+        throw "DOI prefix is blank"
+      }
+
+      return this.prefix.replace(/^10\./, "")
     }
 
     isValid(): boolean {
       return (this.prefix.length > 0 && this.suffix.length > 0)
     }
 
-    equal(anotherDOI: DOI): boolean {
+    equal(anotherDOI: DoiInterface): boolean {
       return this.toString().toLowerCase() == anotherDOI.toString().toLowerCase()
     }
 
@@ -265,7 +292,7 @@ export namespace Crossref {
    * @param doiString doiString
    * */
   export function extractIdentifier(doiString: string): string {
-    return DOI.parse(doiString).toString()
+    return Doi.parse(doiString).toString()
   }
 
   function constructRequestUrl(identifier: string): string {
