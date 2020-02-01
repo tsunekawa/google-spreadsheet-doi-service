@@ -1,4 +1,4 @@
-import { extractIdentifier } from "../crossref"
+import { Crossref } from "../crossref"
 
 function UnitTestDoiFunctions(): void {
     
@@ -13,6 +13,8 @@ function UnitTestDoiFunctions(): void {
     ]
 
     test('extractIdentifier', function (t){
+        let extractIdentifier = Crossref.extractIdentifier
+
         doiList.forEach( (doi: {input:string, doiName:string, url:string}) => {
             t.equal(extractIdentifier(doi.input), doi.doiName, "DOI Name of " + doi.input + " is " + doi.doiName)
         })

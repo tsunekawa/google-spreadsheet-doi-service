@@ -17,6 +17,6 @@
   },
   "devDependencies": {
     "@types/google-apps-script": "^1.0.9",
-    "clasp": "^1.0.0"
+    "@google/clasp": "^1.0.0"
   }
 }

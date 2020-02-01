@@ -19,7 +19,7 @@ type XMLString = string
  * Ref. https://github.com/Crossref/rest-api-doc/blob/master/api_format.md
  */
 
-namespace Crossref {
+export namespace Crossref {
 
   export interface Response {
     status: string,
@@ -79,7 +79,7 @@ namespace Crossref {
     contentDomain?: ContentDomain
     relation?: Relations
     review?: Review
-  }  
+  }
 
   // Work Nested Types
 
@@ -91,7 +91,7 @@ namespace Crossref {
   }
 
   export interface ClinicalTrialNumber {
-    clinicalTrialNumber:	string //	Identifier of the clinical trial
+    clinicalTrialNumber: string //	Identifier of the clinical trial
     registry: string // DOI of the clinical trial regsitry that assigned the trial number
     type: string // One of preResults, results or postResults
   }
@@ -155,26 +155,26 @@ namespace Crossref {
   }
 
   export interface Reference {
-    key: string 	
-    DOI?: string 	
+    key: string
+    DOI?: string
     doiAssertedBy?: "crossref" | "publisher"
-    issue?: string 	
-    firstPage?: string 	
-    volume?: string 	
-    edition?: string 	
-    component?: string 	
-    standardDesignator?: string 	
-    standardsBody?: string 	
-    author?: string 	
-    year?: string 	
-    unstructured?: string 	
-    journalTitle?: string 	
-    articleTitle?: string 	
-    seriesTitle?: string 	
-    volumeTitle?: string 	
-    ISSN?: string 	
+    issue?: string
+    firstPage?: string
+    volume?: string
+    edition?: string
+    component?: string
+    standardDesignator?: string
+    standardsBody?: string
+    author?: string
+    year?: string
+    unstructured?: string
+    journalTitle?: string
+    articleTitle?: string
+    seriesTitle?: string
+    volumeTitle?: string
+    ISSN?: string
     issnType?: "pissn" | "eissn"
-    ISBN?: string 	
+    ISBN?: string
     isbnType?: string
   }
 
@@ -182,20 +182,20 @@ namespace Crossref {
     value: string
     type: "eissn" | "pissn" | "lissn"
   }
- 
+
   export interface ContentDomain {
     domain: string[]
     crossrefRestriction: boolean
-  }  
-  
-  export type Relations = { string : Relation }
+  }
+
+  export type Relations = { string: Relation }
 
   export interface Relation {
     idType: string
     id: string
     assertedBy: "subject" | "object"
   }
- 
+
   export interface Review {
     runningNumber?: string
     revisionRound?: string
@@ -204,6 +204,117 @@ namespace Crossref {
     type?: "referee-report" | "editor-report" | "author-comment" | "community-comment" | "aggregate"
     competingInterestStatement?: string
     language?: string
+  }
+
+  export interface DoiInterface {
+    prefix: string
+    suffix: string
+    readonly registrant: string
+
+    /**
+     * @return doiString - return DOI Name as string
+     */
+    toString(): string
+
+    /**
+     * @return url - return DOI Name as URL
+     */
+    toURI(): URL
+
+    isValid(): boolean
+
+    equal(doi: DoiInterface): boolean
+
+  }
+
+  export class Doi implements DoiInterface {
+    private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)?doi.org\/)?(10\.[^\/]+)\/([^\/]+)$/
+    private static PREFIX_PATTERN = /10\.[\/]+/
+    private static SUFFIX_PATTERN = /[\/]+/
+
+    static parse(doiString: string): DoiInterface {
+      let result = this.DOI_PARSE_PATTERN.exec(doiString)
+
+      if (!result) {
+        throw doiString + " is not DOI"
+      }
+
+      let prefix = result[1]
+      let suffix = result[2]
+
+      return new Doi(prefix, suffix)
+    }
+
+    static isDOI(value: string): boolean {
+      return value.match(this.DOI_PARSE_PATTERN).length > 0
+    }
+
+    static equal(doi_a: DoiInterface, doi_b: DoiInterface): boolean {
+      return doi_a.equal(doi_b)
+    }
+
+    constructor(prefix: string, suffix: string) {
+      this.prefix = prefix
+      this.suffix = suffix
+    }
+
+    prefix: string
+    suffix: string
+
+    get registrant(): string {
+      if (!this.prefix) {
+        throw "DOI prefix is blank"
+      }
+
+      return this.prefix.replace(/^10\./, "")
+    }
+
+    isValid(): boolean {
+      return (this.prefix.length > 0 && this.suffix.length > 0)
+    }
+
+    equal(anotherDOI: DoiInterface): boolean {
+      return this.toString().toLowerCase() == anotherDOI.toString().toLowerCase()
+    }
+
+    toString(): string {
+      return (this.prefix + "/" + this.suffix).toLowerCase()
+    }
+
+    toURI(): URL {
+      return ["https://doi.org", this.prefix, this.suffix].join("/").toLowerCase()
+    }
+
+  }
+
+  /*
+   * return a doi identifier from doi string
+   * @param doiString doiString
+   * */
+  export function extractIdentifier(doiString: string): string {
+    return Doi.parse(doiString).toString()
+  }
+
+  function constructRequestUrl(identifier: string): string {
+    let properties = PropertiesService.getScriptProperties();
+    let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
+    let parameters: object = {
+      mailto: properties.getProperty("CROSSREF_API_MAILTO")
+    }
+
+    let url: URL = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
+    return url;
+  }
+
+  function get(url: string): string {
+    return UrlFetchApp.fetch(url).getContentText()
+  }
+
+  export function getWork(doiString: string): Response {
+    let identifier: string = extractIdentifier(doiString);
+    let url: string = constructRequestUrl(identifier);
+
+    return JSON.parse(get(url));
   }
 
 }
@@ -222,42 +333,6 @@ function getRowsFromRange(range: Range): Range {
   return sheet.getRange(startRowIndex, 1, numRows, lastColumnIndex);
 }
 
-/*
- * return a doi identifier from doi string
- * @param doiString doiString
-*/
-export function extractIdentifier(doiString: string): string {
-  if (!doiString) {
-    throw "doiString is invalid: " + doiString;
-  }
-
-  let reg: RegExp = /(?:https:\/\/doi\.org\/)?([0-9.]+\/.+)/;
-  let result: string[] = reg.exec(doiString)
-
-  if (result.length >= 2) {
-    return result[1];
-  } else {
-    return "";
-  }
-}
-
-function constructRequestUrl(identifier: string): string {
-  let properties = PropertiesService.getScriptProperties();
-  let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
-  let parameters: object = {
-    mailto: properties.getProperty("CROSSREF_API_MAILTO")
-  }
-
-  let url: URL = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
-  return url;
-}
-
-function getMetadataFromDoi(doiString: string): Crossref.Response {
-  let identifier: string = extractIdentifier(doiString);
-  let url: string = constructRequestUrl(identifier);
-
-  return JSON.parse(UrlFetchApp.fetch(url).getContentText());
-}
 
 function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: string[]): string[] {
   let titleIndex: number = headers.indexOf('title');
@@ -315,7 +390,7 @@ function updateRowByDoi(range: Range, headers: string[]): Range {
 
   let updatedValues: string[][] = rowsValues.map(function (rowValues: string[]): string[] {
     let doi: string = rowValues[headers.indexOf('doi')];
-    let metadata: Crossref.Response = getMetadataFromDoi(doi);
+    let metadata: Crossref.Response = Crossref.getWork(doi);
 
     return setMetadata(metadata, rowValues, headers);
   });
