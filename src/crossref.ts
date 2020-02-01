@@ -21,12 +21,23 @@ type XMLString = string
 
 export namespace Crossref {
 
-  export interface Response {
-    status: string,
+  export interface ResultInterface {
+    status: "ok" | "error"
     "message-type": string,
     "message-version": string,
-    message: Work
+    message: any
   }
+
+  export interface SingletonResultInterface<T> extends ResultInterface {
+    message: T
+  }
+
+  export interface ListResultInterface<T> extends ResultInterface {
+    message: T[]
+  }
+
+  export type WorkResult = SingletonResultInterface<Work>
+  export type WorkListResult = ListResultInterface<Work>
 
   export interface Work {
     publisher: string
@@ -287,34 +298,46 @@ export namespace Crossref {
 
   }
 
-  /*
-   * return a doi identifier from doi string
-   * @param doiString doiString
-   * */
-  export function extractIdentifier(doiString: string): string {
-    return Doi.parse(doiString).toString()
+  /**
+   * Client
+   */
+
+  export interface ClientInterface {
+    mailto: string
+
+    getWork(doi: DoiInterface): WorkResult
   }
 
-  function constructRequestUrl(identifier: string): string {
-    let properties = PropertiesService.getScriptProperties();
-    let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
-    let parameters: object = {
-      mailto: properties.getProperty("CROSSREF_API_MAILTO")
+  export class Client implements ClientInterface {
+    endPoint: string
+    mailto: string
+
+    constructor(params: { mailto: string, endPoint?: string }, options?: object) {
+      this.mailto = params.mailto
+      this.endPoint = params.endPoint || "https://api.crossref"
     }
 
-    let url: URL = [[endpoint, identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
-    return url;
-  }
+    getWork(doi: DoiInterface): WorkResult {
+      let identifier: string = doi.toString();
+      let url: string = this.constructRequestUrl(identifier);
 
-  function get(url: string): string {
-    return UrlFetchApp.fetch(url).getContentText()
-  }
+      return JSON.parse(this.get(url))
+    }
 
-  export function getWork(doiString: string): Response {
-    let identifier: string = extractIdentifier(doiString);
-    let url: string = constructRequestUrl(identifier);
+    private get(url: string): string {
+      return UrlFetchApp.fetch(url).getContentText()
+    }
 
-    return JSON.parse(get(url));
+    private constructRequestUrl(identifier: string): string {
+      let parameters: object = {
+        mailto: this.mailto
+      }
+
+      let url: URL = [[this.endPoint, "work", identifier].join("/"), Object.keys(parameters).map((key: string) => key + "=" + parameters[key]).join("&")].join("?");
+
+      return url;
+    }
+
   }
 
 }
@@ -334,15 +357,15 @@ function getRowsFromRange(range: Range): Range {
 }
 
 
-function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: string[]): string[] {
+function setMetadata(metadata: Crossref.Work, rowValues: any[], headers: string[]): string[] {
   let titleIndex: number = headers.indexOf('title');
   if (titleIndex >= 0) {
-    rowValues[titleIndex] = metadata.message.title[0];
+    rowValues[titleIndex] = metadata.title[0];
   }
 
   let authorIndex = headers.indexOf('author');
   if (authorIndex >= 0) {
-    let authorValue: string = metadata.message.author.map(function (author: Crossref.Contributor): string {
+    let authorValue: string = metadata.author.map(function (author: Crossref.Contributor): string {
       return [author.given, author.family].join(" ");
     }).join(";");
 
@@ -351,11 +374,11 @@ function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: str
 
   let pubYearIndex: number = headers.indexOf('pubYear');
   if (pubYearIndex >= 0) {
-    let publishedOnline = metadata.message['published-online'];
+    let publishedOnline = metadata.publishedOnline;
     let pubYearValue;
 
     if (publishedOnline) {
-      pubYearValue = publishedOnline['date-parts'][0];
+      pubYearValue = publishedOnline.dateParts[0];
     } else {
       pubYearValue = "";
     }
@@ -365,19 +388,19 @@ function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: str
 
   let journalTitleIndex = headers.indexOf('journalTitle');
   if (journalTitleIndex >= 0) {
-    let journalTitleValue = metadata.message["container-title"][0];
+    let journalTitleValue = metadata.containerTitle[0];
     rowValues[journalTitleIndex] = journalTitleValue;
   }
 
   let issnIndex = headers.indexOf('issn');
   if (issnIndex >= 0) {
-    let issnValue = metadata.message.ISSN[0];
+    let issnValue = metadata.ISSN[0];
     rowValues[issnIndex] = issnValue;
   }
 
   let urlIndex = headers.indexOf('url');
   if (urlIndex >= 0) {
-    let urlValue = metadata.message.URL;
+    let urlValue = metadata.URL;
     rowValues[urlIndex] = urlValue;
   }
 
@@ -385,12 +408,19 @@ function setMetadata(metadata: Crossref.Response, rowValues: any[], headers: str
 }
 
 function updateRowByDoi(range: Range, headers: string[]): Range {
+  let properties = PropertiesService.getScriptProperties();
+  let endpoint: string = properties.getProperty("DOI_API_ENDPOINT");
+  let mailto: string = properties.getProperty("CROSSREF_API_MAILTO")
+
+  let client = new Crossref.Client({ mailto: mailto, endPoint: endpoint })
+
   let rows: Range = getRowsFromRange(range);
   let rowsValues: string[][] = rows.getValues();
 
   let updatedValues: string[][] = rowsValues.map(function (rowValues: string[]): string[] {
-    let doi: string = rowValues[headers.indexOf('doi')];
-    let metadata: Crossref.Response = Crossref.getWork(doi);
+    let doi = Crossref.Doi.parse(rowValues[headers.indexOf('doi')]);
+    let result = client.getWork(doi);
+    let metadata = result.message
 
     return setMetadata(metadata, rowValues, headers);
   });
