@@ -4,6 +4,14 @@ interface TestCase {
     equal(actual: any, expected: any, msg: string): void
     notThrow(fn: Function, msg: string): void
 }
-type test = (msg: string, cb: (t: TestCase) => void) => void
 
-export function GasTap(): test
+declare interface TestInterface {
+    (msg: string, cb: (t: TestCase) => void): void
+    finish(): void
+    end(): void
+    totalFailed(): number
+    totalSucceed(): number
+    totalSkipped(): number
+}
+
+export declare function GasTap(): TestInterface

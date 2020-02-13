@@ -42,4 +42,6 @@ function unitTestDOIClass() {
     t.equal(parsed.toURI(), doi, "DOI URI of " + doi + "is " + doi)
   })
 
+  test.finish()
+
 }
