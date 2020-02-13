@@ -1,13 +1,5 @@
+import { GasTap } from "../lib/gas-tab-lib"
 import { Crossref } from "../crossref";
-
-declare interface TestCase {
-  ok(value: any, msg: string): void
-  notOk(value: any, msg: string): void
-  equal(actual: any, expected: any, msg: string): void
-  notThrow(fn: Function, msg: string): void
-}
-type test = (msg: string, cb: (t: TestCase) => void) => void
-declare function GasTap(): test
 
 function unitTestDOIClass() {
   let test = GasTap()
