@@ -3,12 +3,12 @@ import { Crossref } from "../crossref";
 
 function unitTestDOIClass() {
   let test = GasTap()
-  const Doi = Crossref.Doi
+  const DOI = Crossref.DOI
   let doi = "https://doi.org/10.7191/jeslib.2014.1060"
 
   test("DOI#new", (t) => {
     t.notThrow(() => {
-      new Doi("10.7191", "jeslib.2014.1060")
+      new DOI("10.7191", "jeslib.2014.1060")
     }, "DOI can create an instance")
   })
 

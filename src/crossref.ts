@@ -217,7 +217,7 @@ export namespace Crossref {
     language?: string
   }
 
-  export interface DoiInterface {
+  export interface DOIInterface {
     prefix: string
     suffix: string
     readonly registrant: string
@@ -234,16 +234,16 @@ export namespace Crossref {
 
     isValid(): boolean
 
-    equal(doi: DoiInterface): boolean
+    equal(doi: DOIInterface): boolean
 
   }
 
-  export class Doi implements DoiInterface {
+  export class DOI implements DOIInterface {
     private static DOI_PARSE_PATTERN = /^(?:https?:\/\/(?:dx\.)?doi.org\/)?(10\.[^\/]+)\/([^\/]+)$/
     private static PREFIX_PATTERN = /10\.[\/]+/
     private static SUFFIX_PATTERN = /[\/]+/
 
-    static parse(doiString: string): DoiInterface {
+    static parse(doiString: string): DOIInterface {
       let result = this.DOI_PARSE_PATTERN.exec(doiString)
 
       if (!result) {
@@ -253,14 +253,14 @@ export namespace Crossref {
       let prefix = result[1]
       let suffix = result[2]
 
-      return new Doi(prefix, suffix)
+      return new DOI(prefix, suffix)
     }
 
     static isDOI(value: string): boolean {
       return value.match(this.DOI_PARSE_PATTERN).length > 0
     }
 
-    static equal(doi_a: DoiInterface, doi_b: DoiInterface): boolean {
+    static equal(doi_a: DOIInterface, doi_b: DOIInterface): boolean {
       return doi_a.equal(doi_b)
     }
 
@@ -284,7 +284,7 @@ export namespace Crossref {
       return (this.prefix.length > 0 && this.suffix.length > 0)
     }
 
-    equal(anotherDOI: DoiInterface): boolean {
+    equal(anotherDOI: DOIInterface): boolean {
       return this.toString().toLowerCase() == anotherDOI.toString().toLowerCase()
     }
 
@@ -305,7 +305,7 @@ export namespace Crossref {
   export interface ClientInterface {
     mailto: string
 
-    getWork(doi: DoiInterface): WorkResult
+    getWork(doi: DOIInterface): WorkResult
   }
 
   export class Client implements ClientInterface {
@@ -317,7 +317,7 @@ export namespace Crossref {
       this.endPoint = params.endPoint || "https://api.crossref"
     }
 
-    getWork(doi: DoiInterface): WorkResult {
+    getWork(doi: DOIInterface): WorkResult {
       let identifier: string = doi.toString();
       let url: string = this.constructRequestUrl(identifier);
 
@@ -418,7 +418,7 @@ function updateRowByDoi(range: Range, headers: string[]): Range {
   let rowsValues: string[][] = rows.getValues();
 
   let updatedValues: string[][] = rowsValues.map(function (rowValues: string[]): string[] {
-    let doi = Crossref.Doi.parse(rowValues[headers.indexOf('doi')]);
+    let doi = Crossref.DOI.parse(rowValues[headers.indexOf('doi')]);
     let result = client.getWork(doi);
     let metadata = result.message
 
