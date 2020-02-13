@@ -16,7 +16,7 @@
     "node": ">= 12.14.1"
   },
   "devDependencies": {
-    "@types/google-apps-script": "^1.0.9",
-    "@google/clasp": "^1.0.0"
+    "@types/google-apps-script": "^1.0.10",
+    "@google/clasp": "^2.3.0"
   }
 }
